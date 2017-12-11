@@ -7,7 +7,14 @@
 #define CCW_LIMIT_ANGLE 0xFFF       // Highest anit-clockwise angle is 0XFFF, as when set to 0 it set servo to wheel mode
 
 #define POT_PIN A2    // Input pin for the potentiometer
-int potRead = 0;      // Potentiometer reading
+int potRead;      // Potentiometer reading
+
+float prevTime = 0;
+float prevAngle = 0;
+float tableAngle;
+float desiredPos;
+float angleIntegral = 0;
+int currTime = 0;
 
 void setup() {
   Dynamixel.begin(SERVO_BAUDRATE);           // We now need to set Ardiuno to the new Baudrate speed
@@ -15,34 +22,39 @@ void setup() {
   Dynamixel.setMode(SERVO_ID, SERVO, CW_LIMIT_ANGLE, CCW_LIMIT_ANGLE);
 }
 
-void getDesiredPos(float tableAngle, float prevAngle. float currTime, float prevTime){
+float getDesiredPos(float tableAngle, float prevAngle, float currTime, float prevTime){
   float deltaT;
   float angleDeriv;
+  float angleDiff;
+  float Kp = 00190064;
+  float Ki = 0.0000593951;
+  float Kd = 0.0228077;
   
   deltaT = currTime - prevTime;
   angleDiff = tableAngle * -1;
-  angleIntegral = angleIntegral + angleDiff(deltaT); 
+  angleIntegral = angleIntegral + angleDiff * deltaT; 
   angleDeriv = (angleDiff - prevAngle) / (deltaT);
-  desiredPos = angleDiff * Kp + angleIntegral * Ki + angleDeric * Kd;
+  desiredPos = angleDiff * Kp + angleIntegral * Ki + angleDeriv * Kd;
   return desiredPos;
 }
-
 void setMotor(float desiredPos){
     float motorCommand;
+    float posReltoMotor;
+    
     posReltoMotor = desiredPos - 0.5;     // Convert distance to motor frame
-    motorCommand = posReltoMotor / 0.36576    // Distance in m to rotations in rad
+    motorCommand = posReltoMotor / 0.36576;    // Distance in m to rotations in rad
     Dynamixel.servo(SERVO_ID, motorCommand, 0x3FF);   // Move servo to potentiometer position
 }
 
 void loop() {
-  currTime = millis()
+  currTime = millis();
   potRead = analogRead(POT_PIN);    // read the value from the sensor
 
   // TODO: convert pot reading to table angle
   //       implement controller
   //       input table angle to control system
 
-  tableAngle = potRead * conversionFactor
+  tableAngle = potRead * 5;
   desiredPos = getDesiredPos(tableAngle, prevAngle, currTime, prevTime);
   setMotor(desiredPos);
   prevTime = currTime;
