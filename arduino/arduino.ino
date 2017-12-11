@@ -15,9 +15,38 @@ void setup() {
   Dynamixel.setMode(SERVO_ID, SERVO, CW_LIMIT_ANGLE, CCW_LIMIT_ANGLE);
 }
 
+void getDesiredPos(float tableAngle, float prevAngle. float currTime, float prevTime){
+  float deltaT;
+  float angleDeriv;
+  
+  deltaT = currTime - prevTime;
+  angleDiff = tableAngle * -1;
+  angleIntegral = angleIntegral + angleDiff(deltaT); 
+  angleDeriv = (angleDiff - prevAngle) / (deltaT);
+  desiredPos = angleDiff * Kp + angleIntegral * Ki + angleDeric * Kd;
+  return desiredPos;
+}
+
+void setMotor(float desiredPos){
+    float motorCommand;
+    posReltoMotor = desiredPos - 0.5;     // Convert distance to motor frame
+    motorCommand = posReltoMotor / 0.36576    // Distance in m to rotations in rad
+    Dynamixel.servo(SERVO_ID, motorCommand, 0x3FF);   // Move servo to potentiometer position
+}
+
 void loop() {
+  currTime = millis()
   potRead = analogRead(POT_PIN);    // read the value from the sensor
-//  Serial.println("Read: " + (String)potRead);
-  Dynamixel.servo(SERVO_ID, potRead*4, 0x3FF);   // Move servo to potentiometer position
+
+  // TODO: convert pot reading to table angle
+  //       implement controller
+  //       input table angle to control system
+
+  tableAngle = potRead * conversionFactor
+  desiredPos = getDesiredPos(tableAngle, prevAngle, currTime, prevTime);
+  setMotor(desiredPos);
+  prevTime = currTime;
+  prevAngle = tableAngle;
+  
 }
 
