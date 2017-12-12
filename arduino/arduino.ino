@@ -16,17 +16,20 @@ float desiredPos;
 float angleIntegral = 0;
 int currTime = 0;
 
+const float pi = 3.141529;
+
 void setup() {
   Dynamixel.begin(SERVO_BAUDRATE);           // We now need to set Ardiuno to the new Baudrate speed
   Dynamixel.setDirectionPin(SERVO_ControlPin);   // Optional. Set direction control pin
   Dynamixel.setMode(SERVO_ID, SERVO, CW_LIMIT_ANGLE, CCW_LIMIT_ANGLE);
+  //Serial.begin(9600);
 }
 
 float getDesiredPos(float tableAngle, float prevAngle, float currTime, float prevTime){
   float deltaT;
   float angleDeriv;
   float angleDiff;
-  float Kp = 00190064;
+  float Kp = 0.0190064;
   float Ki = 0.0000593951;
   float Kd = 0.0228077;
   
@@ -34,15 +37,18 @@ float getDesiredPos(float tableAngle, float prevAngle, float currTime, float pre
   angleDiff = tableAngle * -1;
   angleIntegral = angleIntegral + angleDiff * deltaT; 
   angleDeriv = (angleDiff - prevAngle) / (deltaT);
-  desiredPos = angleDiff * Kp + angleIntegral * Ki + angleDeriv * Kd;
+//  Serial.println((String)angleDiff + "\t" + (String)angleIntegral + "\t" + (String)angleDeriv);
+  desiredPos = 10*(angleDiff * Kp + angleIntegral * Ki + angleDeriv * Kd);
   return desiredPos;
 }
 void setMotor(float desiredPos){
-    float motorCommand;
+    int motorCommand;
     float posReltoMotor;
     
-    posReltoMotor = desiredPos - 0.5;     // Convert distance to motor frame
-    motorCommand = posReltoMotor / 0.36576;    // Distance in m to rotations in rad
+    posReltoMotor = desiredPos + 0.5;     // Convert distance to motor frame
+    motorCommand = (int) (posReltoMotor * 1024);
+    //motorCommand = posReltoMotor / 0.36576;    // Distance in m to rotations in rad
+    //Serial.println(motorCommand);
     Dynamixel.servo(SERVO_ID, motorCommand, 0x3FF);   // Move servo to potentiometer position
 }
 
@@ -54,11 +60,16 @@ void loop() {
   //       implement controller
   //       input table angle to control system
 
-  tableAngle = potRead * 5;
+  tableAngle = map(potRead, 0.0, 1023.0, -100*pi/4, 100*pi/4);
+  tableAngle = (tableAngle / 100) + .02;
   desiredPos = getDesiredPos(tableAngle, prevAngle, currTime, prevTime);
   setMotor(desiredPos);
   prevTime = currTime;
   prevAngle = tableAngle;
-  
+//  Serial.print("Current table angle: ");
+//  Serial.println(tableAngle);
+//  Serial.print("Goal motor position: ");
+//  Serial.println(desiredPos);
 }
+
 
